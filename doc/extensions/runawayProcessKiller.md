@@ -1,5 +1,4 @@
-Runaway Process Killer Extension
-===
+# Runaway Process Killer extension
 
 In particular cases Windows service wrapper may leak the process after the service completion.
 It happens when WinSW gets terminated without executing the shutdown logic.
@@ -8,11 +7,13 @@ Examples: force kill of the service process, .NET Runtime crash, missing permiss
 Such runaway processes may conflict with the service process once it restarts.
 This extension allows preventing it by running the runaway process termination on startup before the executable gets started.
 
-Since: [WinSW 2.0](../../CHANGELOG.md).
+Since: WinSW 2.0.
 
-### Usage
+## Usage
 
-The extension can be configured via the [XML Configuration File](../xmlConfigFile.md). Configuration sample:
+The extension can be configured via the [XML configuration file](../xmlConfigFile.md) or [YAML configuration file](../yamlConfigFile.md). 
+
+### XML configuration sample
 
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
@@ -22,7 +23,7 @@ The extension can be configured via the [XML Configuration File](../xmlConfigFil
   <description>This is a stub service.</description>
   <executable>%BASE%\sleep.bat</executable>
   <arguments></arguments>
-  <logmode>rotate</logmode>
+  <log mode="roll"></log>
 
   <extensions>
 	<!-- This is a sample configuration for the RunawayProcessKiller extension. -->
@@ -37,13 +38,33 @@ The extension can be configured via the [XML Configuration File](../xmlConfigFil
       -->
       <stopTimeout>5000</stopTimeout>
       <!-- If true, the parent process will be terminated first if the runaway process gets terminated. -->
-      <stopParentFirst>false</stopParentFirst>
+      <stopParentFirst>true</stopParentFirst>
     </extension>
   </extensions>
 </service>
 ```
 
-### Notes
+### YAML configuration sample
+
+```yaml
+id: sampleService
+name: Sample Service
+description: This is a stub service.
+executable: '%BASE%\sleep.bat'
+arguments: arg1 arg2
+log:
+  mode: roll
+extensions:
+    - id: killRunawayProcess
+      enabled: yes
+      className: winsw.Plugins.RunawayProcessKiller.RunawayProcessKillerExtension
+      settings:
+            pidfile: 'foo/bar/pid.txt'
+            stopTimeOut: 5000
+            StopParentFirst: true
+```
+
+## Notes
 
 * The current implementation of the the extension checks only the root process (started executable)
 * If the runaway process is detected the entire, the entire process tree gets terminated
